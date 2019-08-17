@@ -1,6 +1,13 @@
 航海日誌 (logbook-kai)
 --
 
+### About This Fork
+
+[AdoptOpenJDK][]12向けに[航海日誌][logbook-kai]([sanaehirotaka/logbook-kai][logbook-kai])をビルドしたものを配布しています。
+自動更新のURLはオリジナルのまま変更していませんので, このリポジトリのビルドを利用する場合は手動で更新, 上書きしてください。
+
+---
+
 **航海日誌 (logbook-kai)** は、「艦隊これくしょん ～艦これ～」をより遊びやすくするための外部ツールです。
 
 画面がコンパクトなのが特徴です。
@@ -110,3 +117,11 @@ MIT ライセンスの下で公開する、自由ソフトウェアです。
 * LGPLv3
 * **ライセンス全文 :** [https://www.free-decompiler.com/flash/license_library/](https://www.free-decompiler.com/flash/license_library/)
 
+#### [OpenJFX](https://openjfx.io/)
+
+* GPLv2 with Classpath Exception
+* **ライセンス全文:** [https://github.com/javafxports/openjdk-jfx/blob/jfx-12/LICENSE](https://github.com/javafxports/openjdk-jfx/blob/jfx-12/LICENSE)
+
+
+[logbook-kai]: https://github.com/sanaehirotaka/logbook-kai/
+[AdoptOpenJDK]: https://adoptopenjdk.net/
