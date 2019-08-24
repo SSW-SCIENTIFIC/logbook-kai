@@ -1,12 +1,13 @@
 package logbook.internal.gui;
 
-import java.io.InputStream;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.controlsfx.control.SegmentedButton;
@@ -34,8 +35,10 @@ import logbook.bean.MissionCollection;
 import logbook.bean.MissionCondition;
 import logbook.bean.Ship;
 import logbook.bean.ShipCollection;
+import logbook.bean.Stype;
+import logbook.bean.StypeCollection;
 import logbook.internal.LoggerHolder;
-import logbook.plugin.PluginServices;
+import logbook.internal.Missions;
 
 /**
  * 遠征確認画面
@@ -50,6 +53,8 @@ public class MissionCheck extends WindowController {
     private TreeView<String> conditionTree;
 
     private ObjectMapper mapper = new ObjectMapper();
+
+    private Set<Mission> expanded = new HashSet<>();
 
     public MissionCheck() {
         this.mapper.configure(Feature.ALLOW_COMMENTS, true);
@@ -118,6 +123,14 @@ public class MissionCheck extends WindowController {
 
                     TreeItem<String> sub = this.buildTree0(mission, fleet);
                     if (sub != null) {
+                        sub.setExpanded(this.expanded.contains(mission));
+                        sub.expandedProperty().addListener((ob, ov, nv) -> {
+                            if (nv != null && nv) {
+                                this.expanded.add(mission);
+                            } else {
+                                this.expanded.remove(mission);
+                            }
+                        });
                         subTree.getChildren().add(sub);
                     }
                 }
@@ -132,26 +145,36 @@ public class MissionCheck extends WindowController {
 
     private TreeItem<String> buildTree0(Mission mission, List<Ship> fleet) {
         try {
-            Integer missionId = mission.getId();
-            if ("前衛支援任務".equals(mission.getName())) {
-                missionId = 33;
-            } else if ("艦隊決戦支援任務".equals(mission.getName())) {
-                missionId = 34;
-            }
-
-            InputStream is = PluginServices.getResourceAsStream("logbook/mission/" + missionId + ".json");
-            if (is == null) {
+            TreeItem<String> item;
+            Optional<MissionCondition> condition = Missions.getMissionCondition(mission.getId());
+            if (condition.isPresent()) {
+                MissionCondition cond = condition.get();
+                cond.test(fleet);
+                item = this.buildLeaf(cond);
+            } else if (mission.getSampleFleet() != null) {
+                item = new TreeItem<>();
+            } else {
                 return null;
             }
-            MissionCondition condition;
-            TreeItem<String> item;
-            try {
-                condition = this.mapper.readValue(is, MissionCondition.class);
-                condition.test(fleet);
-                item = this.buildLeaf(condition);
-                item.setValue(mission.getName());
-            } finally {
-                is.close();
+            item.setValue(mission.toString());
+            if (mission.getSampleFleet() != null) {
+                TreeItem<String> sample = new TreeItem<>("サンプル編成");
+
+                GlyphFont fontAwesome = GlyphFontRegistry.font("FontAwesome");
+
+                StackPane pane = new StackPane();
+                pane.setPrefWidth(18);
+                pane.getChildren().add(fontAwesome.create(FontAwesome.Glyph.INFO));
+                sample.setGraphic(pane);
+
+                for (Integer type : mission.getSampleFleet()) {
+                    Optional.ofNullable(StypeCollection.get()
+                            .getStypeMap()
+                            .get(type))
+                            .map(Stype::getName)
+                            .ifPresent(name -> sample.getChildren().add(new TreeItem<>(name)));
+                }
+                item.getChildren().add(sample);
             }
             return item;
         } catch (Exception e) {
